@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import tools.jackson.databind.ObjectMapper;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -83,11 +84,17 @@ class EventLedgerApiApplicationTests {
         mvc.perform(post("/events").contentType(MediaType.APPLICATION_JSON).content(a)).andExpect(status().isCreated());
         mvc.perform(post("/events").contentType(MediaType.APPLICATION_JSON).content(b)).andExpect(status().isCreated());
 
-        // list should be ordered by timestamp asc: b then a
-        String list = mvc.perform(get("/events?account=acct-2")).andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        // quick check: eventId order
-        assertThat(list).containsSequence("evt-200", "evt-201");
+//        // list should be ordered by timestamp asc: b then a
+//        String list = mvc.perform(get("/events?account=acct-2")).andExpect(status().isOk())
+//                .andReturn().getResponse().getContentAsString();
+//        // quick check: eventId order
+//        assertThat(list).containsSequence("evt-200", "evt-201");
+        
+        mvc.perform(get("/events")
+                .param("account", "acct-2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].eventId").value("evt-200"))
+                .andExpect(jsonPath("$[1].eventId").value("evt-201"));
 
         // balance should be 150 (200 - 50)
         String balance = mvc.perform(get("/accounts/acct-2/balance")).andExpect(status().isOk())
